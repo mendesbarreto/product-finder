@@ -1,0 +1,17 @@
+[package]
+name = "xbox-finder"
+version = "0.1.0"
+edition = "2018"
+authors = ["Douglas Mendes <mendes-barreto@live.com>"]
+
+[dependencies]
+dotenv = { version = "0.15.0" }
+dotenv_codegen = { version = "0.15.0" }
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+teloxide = { version = "0.5", features = ["frunk", "macros", "auto-send"] }
+log = { version = "0.4" }
+pretty_env_logger = { version = "0.4" }
+async-trait = { version = "0.1" }
