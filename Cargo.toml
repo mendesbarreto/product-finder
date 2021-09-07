@@ -5,6 +5,9 @@ edition = "2018"
 authors = ["Douglas Mendes <mendes-barreto@live.com>"]
 
 [dependencies]
+scraper = { version = "0.12" }
+select = { version = "0.5.0" }
+job_scheduler = { version = "1.2" }
 dotenv = { version = "0.15.0" }
 dotenv_codegen = { version = "0.15.0" }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
