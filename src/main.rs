@@ -1,24 +1,18 @@
+mod environment;
+
 extern crate job_scheduler;
 extern crate reqwest;
-extern crate select;
 
-use job_scheduler::{JobScheduler, Job};
-use std::time::Duration;
-use dotenv::dotenv;
-use select::document::Document;
-use select::predicate::{Attr, Class, Name, Predicate};
 use std::error::Error;
-use scraper::{Html, Selector};
+use teloxide::prelude::*;
+use teloxide::types::ChatId;
 use teloxide::Bot;
-use teloxide::types::InputFile;
-use teloxide::{prelude::*, utils::command::BotCommand};
-use std::borrow::Borrow;
 
 #[derive(Debug)]
 struct Store {
     name: String,
     link: String,
-    in_stock_string_list: Vec<&'static str>
+    in_stock_string_list: Vec<&'static str>,
 }
 
 impl Clone for Store {
@@ -31,24 +25,34 @@ impl Clone for Store {
     }
 }
 
+async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
+    let bot = Bot::from_env().auto_send();
+    let chat_id = environment::variables::get_application_chat_id();
+
+    match find_xbox().await {
+        Ok(messages) => {
+            for message in messages {
+                bot.send_message(ChatId::Id(chat_id), message).await?;
+            }
+        }
+        Err(error) => return Err(error),
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
-    let mut scheduler = JobScheduler::new();
-    teloxide::enable_logging!();
+    //let mut scheduler = JobScheduler::new();
+    environment::variables::load();
 
-    scheduler.add(Job::new("1/2 * * * * *".parse().unwrap(), || {
-
-    }));
-
-    loop {
-        scheduler.tick();
-        println!("I get executed every 2 seconds");
-        std::thread::sleep(Duration::from_millis(500))
+    match run().await {
+        Ok(_) => println!("OK"),
+        Err(error) => println!("{:?}", error),
     }
 }
 
-async fn find_xbox() -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn find_xbox() -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
     let stores = vec![
         Store {
             name: String::from("Walmart"),
@@ -59,39 +63,34 @@ async fn find_xbox() -> Result<(), Box<dyn Error + Send + Sync>> {
                 "This item is sold online only",
                 "Arrives",
                 "Out of stock at nearby stores",
-            ]
+            ],
         },
         Store {
             name: String::from("EBGames"),
-            link: String::from("https://www.walmart.ca/en/ip/xbox-series-x/6000201786332"),
-            in_stock_string_list: vec![
-                "Available at nearby stores",
-                "This item is sold online only",
-                "Arrives",
-                "Out of stock at nearby stores",
-                "Out"
-            ]
-        }
+            link: String::from("https://www.gamestop.ca/Xbox%20Series%20X/Games/877779/xbox-all-access-xbox-series-x?xaa=1"),
+            in_stock_string_list: vec!["Home Delivery", "Collect In Store"],
+        },
+        Store {
+            name: String::from("Best Buy"),
+            link: String::from("https://www.bestbuy.ca/en-ca/product/xbox-series-x-1tb-console/14964951"),
+            in_stock_string_list: vec!["Available to ship", "Available for free store pickup"],
+        },
     ];
+
+    let mut messages: Vec<String> = vec![];
 
     for store in stores {
         match find_xbox_by(store).await {
-                Ok(result) => {
-                    let bot = Bot::from_env().auto_send();
-                    let message_string = format!("Xbox found at Store: {} Link: {}", result.name, result.link);
-                    teloxide::repl(bot, |message| async move {
-                        message.answer("Xbox found");
-                        respond(())
-                }).await
-            },
-            Err(err) => println!("{}", err)
-        }
+            Ok(result) => messages.push(format!(
+                "Xbox was found on: {} link: {}",
+                result.name, result.link
+            )),
+            Err(err) => println!("{:?}", err.to_string()),
+        };
     }
 
-    Ok(())
+    Ok(messages)
 }
-
-
 
 async fn find_xbox_by(store: Store) -> Result<Store, Box<dyn Error + Send + Sync>> {
     let client = reqwest::Client::new();
