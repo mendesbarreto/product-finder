@@ -73,11 +73,9 @@ async fn find_xbox() -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
             name: String::from("Walmart"),
             link: String::from("https://www.walmart.ca/en/ip/xbox-series-x/6000201786332"),
             in_stock_string_list: vec![
-                "Out of Stock",
                 "Available at nearby stores",
                 "This item is sold online only",
                 "Arrives",
-                "Out of stock at nearby stores",
             ],
         },
         Store {
