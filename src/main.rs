@@ -1,12 +1,16 @@
 mod environment;
 
-extern crate job_scheduler;
 extern crate reqwest;
 
+use clokwerk::{AsyncScheduler, TimeUnits};
 use std::error::Error;
 use teloxide::prelude::*;
 use teloxide::types::ChatId;
 use teloxide::Bot;
+// Import week days and WeekDay
+use clokwerk::Interval::*;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Debug)]
 struct Store {
@@ -45,10 +49,21 @@ async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
 async fn main() {
     //let mut scheduler = JobScheduler::new();
     environment::variables::load();
+    let time_in_minutes =
+        environment::variables::get_application_scheduler_time_minutes().minutes();
 
-    match run().await {
-        Ok(_) => println!("OK"),
-        Err(error) => println!("{:?}", error),
+    let mut scheduler = AsyncScheduler::new();
+
+    scheduler.every(time_in_minutes).run(|| async {
+        match run().await {
+            Ok(_) => println!("OK"),
+            Err(error) => println!("{:?}", error),
+        }
+    });
+
+    loop {
+        scheduler.run_pending().await;
+        thread::sleep(Duration::from_millis(100));
     }
 }
 
