@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=xbox-finder
+ARG PROJECT_NAME=product-finder
 
 FROM rust:1.54 as builder
 ARG PROJECT_NAME
@@ -14,7 +14,7 @@ RUN rm src/*.rs
 
 ADD . ./
 
-RUN rm ./target/release/deps/xbox_finder*
+#RUN rm ./target/release/deps/product-finder*
 RUN cargo build --release
 
 FROM debian:buster-slim
@@ -42,4 +42,4 @@ RUN chown -R $APP_USER:$APP_USER ${APP}
 USER $APP_USER
 WORKDIR $APP
 
-CMD ["./xbox-finder"]
+CMD ["./product-finder"]

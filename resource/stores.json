@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Walmart.ca",
+    "link": "https://www.walmart.ca/en/ip/xbox-series-x/6000201786332",
+    "keywords": [
+      "Available at nearby stores",
+      "This item is sold online only",
+      "Arrives"
+    ]
+  },
+  {
+    "name": "GameSpot.ca",
+    "link": "https://www.bestbuy.ca/en-ca/product/xbox-series-x-1tb-console/14964951?postalCode=G1C6p6",
+    "keywords": [
+      "Home Delivery",
+      "Collect In Store"
+    ]
+  },
+  {
+    "name": "Best Buy CA",
+    "link": "https://www.bestbuy.ca/en-ca/product/xbox-series-x-1tb-console/14964951?postalCode=G1C6p6",
+    "keywords": [
+      ">Available to ship<",
+      ">Available for free store pickup<"
+    ]
+  }
+]

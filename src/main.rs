@@ -1,33 +1,20 @@
-mod environment;
-
 extern crate reqwest;
 
-use clokwerk::{AsyncScheduler, TimeUnits};
 use std::error::Error;
-use teloxide::prelude::*;
-use teloxide::types::ChatId;
-use teloxide::Bot;
-// Import week days and WeekDay
-use clokwerk::Interval::*;
 use std::thread;
 use std::time::Duration;
 
-#[derive(Debug)]
-struct Store {
-    name: String,
-    link: String,
-    in_stock_string_list: Vec<&'static str>,
-}
+use clokwerk::Interval::*;
+use clokwerk::{AsyncScheduler, TimeUnits};
+use teloxide::prelude::*;
+use teloxide::types::ChatId;
+use teloxide::Bot;
 
-impl Clone for Store {
-    fn clone(&self) -> Self {
-        Store {
-            name: self.name.clone(),
-            link: self.link.clone(),
-            in_stock_string_list: self.in_stock_string_list.clone(),
-        }
-    }
-}
+// Import week days and WeekDay
+use crate::stores::store::Store;
+
+mod environment;
+mod stores;
 
 async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
     let bot = Bot::from_env().auto_send();
@@ -54,6 +41,11 @@ async fn main() {
 
     let mut scheduler = AsyncScheduler::new();
 
+    match run().await {
+        Ok(_) => println!("OK"),
+        Err(error) => println!("{:?}", error),
+    }
+
     scheduler.every(time_in_minutes).run(|| async {
         match run().await {
             Ok(_) => println!("OK"),
@@ -68,28 +60,7 @@ async fn main() {
 }
 
 async fn find_xbox() -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
-    let stores = vec![
-        Store {
-            name: String::from("Walmart"),
-            link: String::from("https://www.walmart.ca/en/ip/xbox-series-x/6000201786332"),
-            in_stock_string_list: vec![
-                "Available at nearby stores",
-                "This item is sold online only",
-                "Arrives",
-            ],
-        },
-        Store {
-            name: String::from("EBGames"),
-            link: String::from("https://www.gamestop.ca/Xbox%20Series%20X/Games/877779/xbox-all-access-xbox-series-x?xaa=1"),
-            in_stock_string_list: vec!["Home Delivery", "Collect In Store"],
-        },
-        Store {
-            name: String::from("Best Buy"),
-            link: String::from("https://www.bestbuy.ca/en-ca/product/xbox-series-x-1tb-console/14964951"),
-            in_stock_string_list: vec!["Available to ship", "Available for free store pickup"],
-        },
-    ];
-
+    let stores = stores::loader::load()?;
     let mut messages: Vec<String> = vec![];
 
     for store in stores {
@@ -116,7 +87,7 @@ async fn find_xbox_by(store: Store) -> Result<Store, Box<dyn Error + Send + Sync
     assert!(response.status().is_success());
 
     let body = response.text().await?;
-    let in_stock_string_list = store.in_stock_string_list.clone();
+    let in_stock_string_list = store.keywords.clone();
 
     for in_stock_string in in_stock_string_list.iter() {
         if body.as_str().find(in_stock_string) != None {
